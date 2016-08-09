@@ -7,28 +7,6 @@
 #     -the covariance matrix of the observed variables
 #     -variable order should be consistent with MOD
 
-#Save a new seed for this sim? 
-getnewseed = 'yes' #'yes' or 'no' (if no specify seed file on next line)
-#seedfile = paste(savefolder,"SeedNov04.Rdata",sep="")
-#folder must contain MOD file, seed file, and SimCV program, 
-
-
-#Load MOD file (Must be copied to save folder)
-MOD <- read.delim(paste(savefolder,"MOD.dat",sep=""))
-
-#Define Population Matrices (PSYID = 1?)
-pF1  = 3 #pF1=pF2
-pOBS = 6
-Fcov = 0.3 #Factor Covariance (yields cor(F1,F2)=0.2)
-OffBlocks = matrix(Fcov,pF1,pF1)
-DiagBlocks = matrix(1,pF1,pF1) + diag(pF1)
-PSY = rbind(cbind(DiagBlocks,OffBlocks),cbind(OffBlocks,DiagBlocks))
-
-
-MU = rep(1,pOBS)
-SIGMA = diag(MU) %*% PSY %*% diag(MU)
-
-
 ###########################
 ##Load Required Packages ##
 ###########################
@@ -37,6 +15,40 @@ require('MASS') #Multivariate Normal
 require('matrixcalc') #Special Matrices
 #require('bindata') #will need eventually
 require('numDeriv') #Needed for SEs
+
+#Get working directory
+savefolder <- getwd()
+#TODO: Clean this up
+
+source(paste(savefolder,'/scvm_functions.r',sep=''))
+
+########################
+##Load and Prep Model ##
+########################
+
+#Save a new seed for this data
+getnewseed = 'yes' #'yes' or 'no' (if no specify seed file on next line)
+#seedfile = paste(savefolder,"SeedNov04.Rdata",sep="")
+#folder must contain MOD file, seed file, and SimCV program, 
+
+#Load MOD file (Must be copied to save folder)
+MOD <- read.delim(paste(savefolder,"/MOD.dat",sep=""))
+
+#Define Population Factor Structure (PSYID = 1)
+pF1  = 3 #Nodes per factor (pF1=pF2)
+pOBS = 6
+Fcov = 0.3 #Factor Covariance (yields cor(F1,F2)=0.3)
+OffBlocks = matrix(Fcov,pF1,pF1)
+DiagBlocks = matrix(1,pF1,pF1) + diag(pF1)
+PSY = rbind(cbind(DiagBlocks,OffBlocks),cbind(OffBlocks,DiagBlocks))
+
+#Define Population Mean and Covariance Matrices
+MU = rep(1,pOBS)
+SIGMA = diag(MU) %*% PSY %*% diag(MU)
+
+#Set sample size
+N =1000
+
 
 ###################################
 ## Count and Selection Variables ##
@@ -89,7 +101,7 @@ print(df)
 
 ##Seed File Name (Store Random Seed)
 if(getnewseed == 'yes'){  
-  seedfile = paste(savefolder,"Seed",format(Sys.time(), "%b%d.%H%M"),".Rdata",sep="")
+  seedfile = paste(savefolder,"/Seed",format(Sys.time(), "%b%d.%H%M"),".Rdata",sep="")
 }
 
 #Function to Store Data (Must Math Col Names Below)
@@ -103,20 +115,11 @@ if(getnewseed == 'yes'){
   save_rng(savefile = seedfile)
 }
 
-
-#Loop Over Sample Sizes
-for(N in Nvals){
-cat("\n")
-cat("Beginning",NREP, "replications for N =", N, "\n")
-cat("Replication: ")
-
 #Restore Seed
 restore_rng(seedfile)
-  
-for(REP in 1:NREP) {
-cat(REP," ")
 
 #################
 ## Draw Sample ##
 #################
 Y=mvrnorm(N,MU,SIGMA)
+
