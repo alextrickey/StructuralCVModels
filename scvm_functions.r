@@ -134,13 +134,13 @@ make_data <- function(model_file_name = 'MOD.dat',
   if(use_random_seed) {
     #If no existing seed file create new
     if(is.na(existing_seed_file)){
-      seedfile = paste("RandomSeed_",
+      existing_seed_file = paste("RandomSeed_",
                        format(Sys.time(),"%Y%b%d_%H%M"),
                        ".Rdata",sep="")
-      save_rng(savefile = seedfile)
+      save_rng(savefile = existing_seed_file)
     }
     #Load Seed
-    restore_rng(savefile = seedfile)
+    restore_rng(savefile = existing_seed_file)
   }
   
   #################
