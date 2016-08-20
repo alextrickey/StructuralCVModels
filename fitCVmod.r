@@ -9,12 +9,12 @@
 #     -the covariance matrix of the observed variables
 #     -variable order should be consistent with MOD
 
-#####################
-## LOAD DATA & MOD ##
-#####################
+#######################
+## LOAD DATA & MODEL ##
+#######################
 
 #Data are here:
-Y = as.matrix(AlcDat)
+Y = as.matrix(read.csv('cv_sample_data.csv'))
 
 #MOD file is here: 
 MOD <- read.delim("MOD.dat")
@@ -25,7 +25,7 @@ MOD <- read.delim("MOD.dat")
 
 require('matrixcalc') #Special Matrices
 require('numDeriv') #Needed for SEs
-source('scvm_functions.r') #Custom function to fit CV models
+source('scvm_functions.r') #Custom functions to fit CV models
 
 
 ###################################
