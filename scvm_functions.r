@@ -1,6 +1,6 @@
 # Filename: scvm_functions.r
 # Purpose: 
-#   Define function to be used to fit CV models
+#   Define functios to be used to fit CV models
 
 # List:
 #   save_rgn: save a seed for random number generation
@@ -18,7 +18,7 @@
 
 #######################################################################
 
-#Saves current seed
+#Saves current seed (for random number generation)
 #ref: http://stackoverflow.com/questions/13997444/
 save_rng <- function(savefile=tempfile()) {
   if (exists(".Random.seed"))  {
@@ -29,7 +29,7 @@ save_rng <- function(savefile=tempfile()) {
   invisible(savefile)
 }
 
-#Restores saved seed
+#Restores saved seed (for random number generation)
 #ref: http://stackoverflow.com/questions/13997444/
 restore_rng <- function(savefile) {
   load(savefile)
@@ -37,131 +37,13 @@ restore_rng <- function(savefile) {
   assign(".Random.seed", oldseed, .GlobalEnv)
 }
 
-
-#Function to Generate Test Data with CV Structure
-#   model_file_name 
-#     - Name of the model file 
-#   model_dir 
-#     - Path to directory containing model file and seed file (if restoring)
-#   save_data 
-#     - Set to TRUE to save sample data to csv
-#   use_random_seed 
-#     - Set to TRUE to make or load seed file
-#   existing_seed_file 
-#     - Name of file containing seed to be restored
-make_data <- function(model_file_name = 'MOD.dat',
-                      model_dir = getwd(),
-                      save_data = FALSE,
-                      use_random_seed = FALSE,
-                      existing_seed_file = NA
-){
-  
-  #Set working directory
-  setwd(model_dir)
-  
-  ########################
-  ##Load and Prep Model ##
-  ########################
-  
-  #Load MOD file (Must be copied to save folder)
-  MOD <- read.delim(model_file_name)
-  
-  #Define Population Factor Structure (PSYID = 1)
-  pF1  = 3 #Nodes per factor (pF1=pF2)
-  pOBS = 6
-  Fcov = 0.3 #Factor Covariance (yields cor(F1,F2)=0.3)
-  OffBlocks = matrix(Fcov,pF1,pF1)
-  DiagBlocks = matrix(1,pF1,pF1) + diag(pF1)
-  PSY = rbind(cbind(DiagBlocks,OffBlocks),cbind(OffBlocks,DiagBlocks))
-  
-  #Define Population Mean and Covariance Matrices
-  MU = rep(1,pOBS)
-  SIGMA = diag(MU) %*% PSY %*% diag(MU)
-  
-  #Set sample size
-  N =1000
-  
-  ###################################
-  ## Count and Selection Variables ##
-  ###################################
-  
-  #total number of variables 
-  p = max(c(MOD$from,MOD$to))
-  # ***Assumes no unused variables
-  
-  #number of observed variables
-  pOBS = nrow(SIGMA) 
-  # ***Assumes variables 1:pOBS are all observed and included in model
-  
-  #Number of unique covariances
-  pSTAR = pOBS*(pOBS+1)/2
-  print(pSTAR)
-  
-  #Select/Identify Paths and Vars
-  sel.ip  <- (MOD$code == 1)#paths from ivs
-  sel.dp  <- (MOD$code == 2)#paths between dvs
-  sel.cov <- (MOD$code == 3)#vars and covs of ivs
-  
-  #Identify and count (strict) IVs 
-  listIV = unique(MOD$from[sel.ip])
-  pIV = length(listIV) #includes errors
-  print(pIV)
-  
-  #Identify and count (all) DVs
-  listDV = unique(MOD$to[MOD$code != 3])
-  pDV = length(listDV)
-  print(pDV)
-  
-  #Select/Identify Free Parameters
-  sel.fixed <- (MOD$index == 0)
-  sel.free <- !(sel.fixed)
-  
-  #number of parameters
-  qTOT = nrow(MOD)
-  qFREE = sum(sel.free)
-  print(qFREE)
-  # *** Assumes no constraints on parameters
-  
-  #df for chi-squared
-  df = pSTAR - qFREE
-  print(df)
-  
-  ##############
-  ## Set Seed ##
-  ##############
-  
-  ##Generate/Restore Seed for Random Number Generator
-  if(use_random_seed) {
-    #If no existing seed file create new
-    if(is.na(existing_seed_file)){
-      existing_seed_file = paste("RandomSeed_",
-                       format(Sys.time(),"%Y%b%d_%H%M"),
-                       ".Rdata",sep="")
-      save_rng(savefile = existing_seed_file)
-    }
-    #Load Seed
-    restore_rng(savefile = existing_seed_file)
-  }
-  
-  #################
-  ## Draw Sample ##
-  #################
-  Y=mvrnorm(N,MU,SIGMA)
-  
-  if(save_data == TRUE){
-    write.csv(Y, paste('cv_sample_data.csv'))
-  }
-  
-  #Return Sample Data Matrix
-  Y
-}
-
-
 #######################################################################
 
 #Function to Store Data (Must Match Col Names Below)
 storeRES <- function(rMETH,filename="") {
-  cat(c(N,REP,rMETH$METH,rMETH$conv,rMETH$oalg,rMETH$mini,rMETH$pars,rMETH$SEs),file=filename,append=T)
+  cat(c(N,REP,
+        rMETH$METH,rMETH$conv,rMETH$oalg,rMETH$mini,rMETH$pars,rMETH$SEs),
+      file=filename,append=T)
   cat("\n",file=filename,append=T)
 }
 
@@ -375,4 +257,123 @@ printRES <- function(rMETH) {
   }else {
     print("Still need to code printer for vectorized output.")
   }
+}
+
+#######################################################################
+
+#Function to Generate Test Data with CV Structure
+#   model_file_name 
+#     - Name of the model file 
+#   model_dir 
+#     - Path to directory containing model file and seed file 
+#       (if restoring)
+#   save_data 
+#     - Set to TRUE to save sample data to csv
+#   use_random_seed 
+#     - Set to TRUE to make or load seed file
+#   existing_seed_file 
+#     - Name of file containing seed to be restored
+make_data <- function(model_file_name = 'MOD.dat',
+                      model_dir = getwd(),
+                      save_data = FALSE,
+                      use_random_seed = FALSE,
+                      existing_seed_file = NA){
+  #Set working directory
+  setwd(model_dir)
+  
+  ########################
+  ##Load and Prep Model ##
+  ########################
+  
+  #Load MOD file (Must be included in directory with model file)
+  MOD <- read.delim(model_file_name)
+  
+  #Define Population Factor Structure (PSYID = 1)
+  pF1  = 3 #Nodes per factor (pF1=pF2)
+  pOBS = 6
+  Fcov = 0.3 #Factor Covariance (yields cor(F1,F2)=0.3)
+  OffBlocks = matrix(Fcov,pF1,pF1)
+  DiagBlocks = matrix(1,pF1,pF1) + diag(pF1)
+  PSY = rbind(cbind(DiagBlocks,OffBlocks),cbind(OffBlocks,DiagBlocks))
+  
+  #Define Population Mean and Covariance Matrices
+  MU = rep(1,pOBS)
+  SIGMA = diag(MU) %*% PSY %*% diag(MU)
+  
+  #Set sample size
+  N =1000
+  
+  ###################################
+  ## Count and Selection Variables ##
+  ###################################
+  
+  #total number of variables 
+  p = max(c(MOD$from,MOD$to))
+  # ***Assumes no unused variables
+  
+  #number of observed variables
+  pOBS = nrow(SIGMA) 
+  # ***Assumes variables 1:pOBS are all observed and included in model
+  
+  #Number of unique covariances
+  pSTAR = pOBS*(pOBS+1)/2
+  print(pSTAR)
+  
+  #Select/Identify Paths and Vars
+  sel.ip  <- (MOD$code == 1) #paths from ivs
+  sel.dp  <- (MOD$code == 2) #paths between dvs
+  sel.cov <- (MOD$code == 3) #vars and covs of ivs
+  
+  #Identify and count (strict) IVs 
+  listIV = unique(MOD$from[sel.ip])
+  pIV = length(listIV) #includes errors
+  print(pIV)
+  
+  #Identify and count (all) DVs
+  listDV = unique(MOD$to[MOD$code != 3])
+  pDV = length(listDV)
+  print(pDV)
+  
+  #Select/Identify Free Parameters
+  sel.fixed <- (MOD$index == 0)
+  sel.free <- !(sel.fixed)
+  
+  #number of parameters
+  qTOT = nrow(MOD)
+  qFREE = sum(sel.free)
+  print(qFREE)
+  # *** Assumes no constraints on parameters
+  
+  #df for chi-squared
+  df = pSTAR - qFREE
+  print(df)
+  
+  ##############
+  ## Set Seed ##
+  ##############
+  
+  ##Generate/Restore Seed for Random Number Generator
+  if(use_random_seed) {
+    #If no existing seed file create new
+    if(is.na(existing_seed_file)){
+      existing_seed_file = paste("RandomSeed_",
+                                 format(Sys.time(),"%Y%b%d_%H%M"),
+                                 ".Rdata",sep="")
+      save_rng(savefile = existing_seed_file)
+    }
+    #Load Seed
+    restore_rng(savefile = existing_seed_file)
+  }
+  
+  #################
+  ## Draw Sample ##
+  #################
+  Y=mvrnorm(N,MU,SIGMA)
+  
+  if(save_data == TRUE){
+    write.csv(Y, paste('cv_sample_data.csv'))
+  }
+  
+  #Return Sample Data Matrix
+  Y
 }
