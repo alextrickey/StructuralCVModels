@@ -137,8 +137,8 @@ calcDelta <-function(theta,W) {
 #Checks for Convergence
 getDelta <- function(rMETH,W) {
   #Check Convergence
-  nlmconv = ((rMETH$oalg == 1) && (rMETH$conv <= 2)) #T if nlm converged
-  optimconv = ((rMETH$oalg == 2) && (rMETH$conv == 0)) #T if optim converged
+  nlmconv = ((rMETH$oalg == 'nlm') && (rMETH$conv <= 2)) #T if nlm converged
+  optimconv = ((rMETH$oalg == 'optim') && (rMETH$conv == 0)) #T if optim converged
   #Get Delta if Convergence
   Delta = matrix(0,qFREE,qFREE)
   if(nlmconv || optimconv) {
@@ -213,7 +213,7 @@ plzcon <- function(theta,func) {
   result = new.env()
   #Try NLM: 
   resNLM = nlm(func,theta,iterlim = 1000)
-  result$oalg = 1
+  result$oalg = 'nlm'
   result$conv = resNLM$code
   result$mini = resNLM$minimum
   result$pars = resNLM$estimate
@@ -221,7 +221,7 @@ plzcon <- function(theta,func) {
   if(result$conv != 0) {
     resOPTIM = optim(theta,func,method='BFGS',control=list(maxit=1000))
     if(resOPTIM$value < result$mini) {
-      result$oalg = 2
+      result$oalg = 'optim'
       result$conv = resOPTIM$convergence
       result$mini = resOPTIM$value
       result$pars = resOPTIM$par
@@ -236,26 +236,30 @@ plzcon <- function(theta,func) {
 #Function to Print Results
 printRES <- function(rMETH) {
   if(is.numeric(rMETH) == F) {
-    #Convergence (0 good)
-    print('Convergence (0 good)')
-    print(rMETH$conv)
+    #Estimation Procedure: 
+    writeLines(paste(rMETH$METH,'\n'))
+    
     #Optimization Method which produced minimum
-    print('Optimization Method which produced minimum')
-    print(rMETH$oalg)
+    writeLines(paste('Optimization Method which Produced Minimum: ',
+                rMETH$oalg))
+    #Convergence 
+    writeLines(paste('Convergence Code: ', rMETH$conv, '\n'))
+    
     #Chi-squared Value
-    print('Chi-squared Value and df')
-    print(rMETH$mini)
-    print(df)
+    writeLines(paste('Chi-squared (df): ',
+                'X^2 = ',rMETH$mini, ' (df=',df,')','\n', sep=''))
     #Parameter Estimates
-    print('Parameter Estimates (including fixed)')
+    writeLines('Parameter Estimates (including fixed): ')
     parlist = MOD$value
     parlist[sel.free] <- rMETH$pars
     print(parlist)
+    cat('\n')
+    
     #SEs of ADF Estimates
-    print('SEs of Estimates')
+    writeLines('SEs of Estimates: ')
     print(rMETH$SEs)
   }else {
-    print("Still need to code printer for vectorized output.")
+    writeLines("Still need to code printer for vectorized output.")
   }
 }
 
@@ -302,6 +306,7 @@ make_data <- function(model_file_name = 'MOD.dat',
   
   #Set sample size
   N =1000
+  writeLines(paste('Sample Size: ', N))
   
   ###################################
   ## Count and Selection Variables ##
@@ -317,7 +322,7 @@ make_data <- function(model_file_name = 'MOD.dat',
   
   #Number of unique covariances
   pSTAR = pOBS*(pOBS+1)/2
-  print(pSTAR)
+  writeLines(paste('Number of Unique Covariances: ', pSTAR))
   
   #Select/Identify Paths and Vars
   sel.ip  <- (MOD$code == 1) #paths from ivs
@@ -326,13 +331,14 @@ make_data <- function(model_file_name = 'MOD.dat',
   
   #Identify and count (strict) IVs 
   listIV = unique(MOD$from[sel.ip])
-  pIV = length(listIV) #includes errors
-  print(pIV)
+  pIV = length(listIV) 
+  writeLines(paste('Number of Strictly Independent Variables: ', pIV))
+  writeLines('\t *Includes Error Terms')
   
   #Identify and count (all) DVs
   listDV = unique(MOD$to[MOD$code != 3])
   pDV = length(listDV)
-  print(pDV)
+  writeLines(paste('Number of Dependent Variables: ',pDV))
   
   #Select/Identify Free Parameters
   sel.fixed <- (MOD$index == 0)
@@ -341,12 +347,12 @@ make_data <- function(model_file_name = 'MOD.dat',
   #number of parameters
   qTOT = nrow(MOD)
   qFREE = sum(sel.free)
-  print(qFREE)
+  writeLines(paste('Number of Free Parameters: ', qFREE))
   # *** Assumes no constraints on parameters
   
   #df for chi-squared
   df = pSTAR - qFREE
-  print(df)
+  writeLines(paste('Degrees of Freedom: ', df))
   
   ##############
   ## Set Seed ##
@@ -369,6 +375,7 @@ make_data <- function(model_file_name = 'MOD.dat',
   ## Draw Sample ##
   #################
   Y=mvrnorm(N,MU,SIGMA)
+  names(Y) = paste('V',1:ncol(Y),sep='')
   
   if(save_data == TRUE){
     write.csv(Y, paste('cv_sample_data.csv'))

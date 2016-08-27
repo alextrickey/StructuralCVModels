@@ -23,11 +23,11 @@ source('scvm_functions.r') #Custom functions to fit CV models
 #######################
 
 #Simulate a dataset
-Y = make_data()
+Y = make_data() ## Read in data here
 head(Y)
 
 #MOD file is here: 
-MOD <- read.delim("MOD.dat")
+MOD <- read.delim("MOD.dat") ## Read in model here
 
 
 ###################################
@@ -39,17 +39,17 @@ N = nrow(Y)
 
 #total number of variables 
 p = max(c(MOD$from,MOD$to))
-print(p)
+cat(paste('Total Number of Variables: ',p))
 # ***Assumes no unused variables
 
 #number of observed variables
 pOBS = ncol(Y) 
-print(pOBS)
+cat(paste('Number of Observed Variables: ', pOBS))
 # ***Assumes variables 1:pOBS are all observed and included in model
 
 #Number of unique covariances
 pSTAR = pOBS*(pOBS+1)/2
-print(pSTAR)
+cat(paste('Number of Unique Covariance Terms: ', pSTAR))
 
 #Select/Identify Paths and Vars
 sel.ip  <- (MOD$code == 1)#paths from ivs
@@ -59,12 +59,12 @@ sel.cov <- (MOD$code == 3)#vars and covs of ivs
 #Identify and count (strict) IVs 
 listIV = unique(MOD$from[sel.ip])
 pIV = length(listIV) #includes errors
-print(pIV)
+cat(paste('Number of Strictly Independent Variables: ', pIV))
 
 #Identify and count (all) DVs
 listDV = unique(MOD$to[MOD$code != 3])
 pDV = length(listDV)
-print(pDV)
+cat(paste('Number of Dependent Variables: ', pDV))
 
 #Select/Identify Free Parameters
 sel.fixed <- (MOD$index == 0)
@@ -73,12 +73,12 @@ sel.free <- !(sel.fixed)
 #number of parameters
 qTOT = nrow(MOD)
 qFREE = sum(sel.free)
-print(qFREE)
+cat(paste('Number of Free Parameter: ', qFREE))
 # *** Assumes no constraints on parameters
 
 #df for chi-squared
 df = pSTAR - qFREE
-print(df)
+cat(paste('Number of Degrees of Freedom: ', df))
 
 ############################
 ## Some Useful Statistics ##
@@ -88,15 +88,18 @@ print(df)
 M = colMeans(Y)
 #Warning: This doesn't return a transposable vector! 
 DmInv = diag(1/M)
-M
+cat('Sample Means:')
+print(M)
 
 #Sample Covariance Matrix
 S = var(Y)
-S
+cat('Sample Covariance Matrix:')
+print(S)
 
 #Sample CV Matrix
 PsyHat = DmInv %*% S %*% DmInv
-PsyHat
+cat('Sample Coefficient of Variation (CV) Matrix:')
+print(PsyHat)
 
 ##########################
 ## Compute Start Values ##
@@ -221,7 +224,7 @@ MOD = getstart(MOD,S)
 ## ADF - CV (Arbitrary)##
 #########################
 
-METH = 4
+METH = 'ADF Estimation with Arbitrary Distribution'
 #Fit Model Using ADFcv procedure
   theta = MOD$value[sel.free]
   rADFcv = plzcon(theta,fADFcv)
@@ -232,12 +235,14 @@ METH = 4
   rADFcv=compsings(rADFcv)
 #Results
   printRES(rADFcv)
+  cat('Sample CV Matrix:')
   print(PsyHat)
-  print("Reproduced CV Mat")
+  cat('Reproduced CV Mat:')
   print(SIGMAof(rADFcv$pars))
-  print("Differences")
+  cat('Covariance Residuals:')
   sdres_ADF = (vech(PsyHat) - vech(SIGMAof(rADFcv$pars)))/sd(vech(PsyHat))
   print(PsyHat - SIGMAof(rADFcv$pars))
+  cat('Covariance Residuals as Percent Difference:')
   print((PsyHat - SIGMAof(rADFcv$pars))*100/PsyHat)
 
 
@@ -245,7 +250,7 @@ METH = 4
 ## ADF - CV Normal ##
 #####################
 
-METH = 5
+METH = 'ADF Estimation with Normal Distribution'
 #Fit Model Using ADFcvn procedure
   theta = MOD$value[sel.free]
   rADFcvn = plzcon(theta,fADFcvn)
@@ -256,20 +261,21 @@ METH = 5
   rADFcvn=compsings(rADFcvn)
 #Results
   printRES(rADFcvn)
+  cat('Sample CV Matrix:')
   print(PsyHat)
-  print("Reproduced CV Mat")
+  cat('Reproduced CV Mat:')
   print(SIGMAof(rADFcvn$pars))
-  print("Differences")
+  cat('Covariance Residuals:')
   sdres_ADFN = (vech(PsyHat) - vech(SIGMAof(rADFcvn$pars)))/sd(vech(PsyHat))
   print(PsyHat - SIGMAof(rADFcvn$pars))
+  cat('Covariance Residuals as Percent Difference:')
   print((PsyHat - SIGMAof(rADFcvn$pars))*100/PsyHat)
-
 
 ##############
 ## GLS - CV ##
 ##############
 
-METH = 6
+METH = 'GLS Estimation'
 #Fit Model Using GLS procedure
   theta = MOD$value[sel.free]
   rGLScv = plzcon(theta,fGLScv)
@@ -280,19 +286,21 @@ METH = 6
   rGLScv=compsings(rGLScv)
 #Results
   printRES(rGLScv)
+  cat('Sample CV Mat:')
   print(PsyHat)
-  print("Reproduced CV Mat")
+  cat('Reproduced CV Mat:')
   print(SIGMAof(rGLScv$pars))
-  print("Differences")
+  cat('Covariance Residuals:')
   sdres_GLS = (vech(PsyHat) - vech(SIGMAof(rGLScv$pars)))/sd(vech(PsyHat))
   print(PsyHat - SIGMAof(rGLScv$pars))
+  cat('Covariance Residuals as Percent Difference:')
   print((PsyHat - SIGMAof(rGLScv$pars))*100/PsyHat)
 
 #############
 ## ML - CV ##
 #############
 
-METH = 7
+METH = 'Maximum Likelihood Estimation'
 #Fit Model Using ML procedure
   theta = MOD$value[sel.free]
   rMLcv = plzcon(theta,fMLcv)
@@ -303,14 +311,15 @@ METH = 7
   rMLcv=compsings(rMLcv)
 #Result
   printRES(rMLcv)
+  cat('Sample CV Mat:')
   print(PsyHat)
-  print("Reproduced CV Mat")
+  cat('Reproduced CV Mat:')
   print(SIGMAof(rMLcv$pars))
-  print("Differences")
+  cat('Covariance Residuals:')
   sdres_ML = (vech(PsyHat) - vech(SIGMAof(rMLcv$pars)))/sd(vech(PsyHat))
   print(PsyHat - SIGMAof(rMLcv$pars))
+  cat('Covariance Residuals as Percent Difference:')
   print((PsyHat - SIGMAof(rMLcv$pars))*100/PsyHat)
-
 
 #Plot Histograms of Standardized Residuals
 par(mfrow = c(2,2),
@@ -349,15 +358,15 @@ mtext("MRLS",3,line=-1.5,cex=0.9)
 mtext(xtitle,1,line=2,cex=0.9)
 mtext("Frequency",2,line=2,cex=0.9)
 
-Table14.1 = rbind(rADFcv$pars, rADFcv$SEs,
+Parameter_Table = rbind(rADFcv$pars, rADFcv$SEs,
                   rADFcvn$pars,rADFcvn$SEs,
                   rGLScv$pars, rGLScv$SEs,
                   rMLcv$pars,  rMLcv$SEs)
-View(Table14.1)
+View(Parameter_Table)
 
-Table14.2 = cbind(vech(PsyHat), 
+CV_Matrix_Table = cbind(vech(PsyHat), 
                   vech(SIGMAof(rADFcv$pars)), 
                   vech(SIGMAof(rADFcvn$pars)), 
                   vech(SIGMAof(rGLScv$pars)),
                   vech(SIGMAof(rMLcv$pars)))
-View(Table14.2)
+View(CV_Matrix_Table)
