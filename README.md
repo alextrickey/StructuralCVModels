@@ -34,5 +34,8 @@ Y_try = make_data(use_random_seed=TRUE,
 #### Reading Results 
 
 
-#### For More Info
-add ref
+#### For More Information
+The reference below contains relevant theoretical background, simulations and an application of the modeling techniques/algorithm provided here. 
+
+Trickey, K. A. (2015). Structural Models of Coefficient of Variation Matrices. UCLA: Psychology 0780. Retrieved from: http://escholarship.org/uc/item/0zj3b6qk
+
