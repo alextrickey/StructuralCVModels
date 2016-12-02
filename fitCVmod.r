@@ -18,18 +18,23 @@ require('matrixcalc') #Special Matrices
 require('numDeriv') #Needed to estimate SEs
 source('scvm_functions.r') #Custom functions to fit CV models
 
-
 #######################
 ## LOAD DATA & MODEL ##
 #######################
 
 #Enter data file name here:
-Y = read.table('cv_sample_data.dat',header = TRUE)
-head(Y)
+Y = read.table('cv_sample_data.dat', header=TRUE)
 
 #Specify MOD file here: 
 MOD <- read.delim("MOD.dat") ## Read in model here
 
+################################
+## Transform and Check Inputs ##
+################################
+
+Y = as.matrix(Y)
+head(Y)
+head(MOD)
 
 ###################################
 ## Count and Selection Variables ##
@@ -363,11 +368,25 @@ Parameter_Table = rbind(rADFcv$pars, rADFcv$SEs,
                   rADFcvn$pars,rADFcvn$SEs,
                   rGLScv$pars, rGLScv$SEs,
                   rMLcv$pars,  rMLcv$SEs)
+row.names(Parameter_Table) <- c('ADF Param Est',
+                                'ADF SEs',
+                                'Normal ADF Param Est',
+                                'Normal ADF SEs',
+                                'GLS Param Est',
+                                'GLS SEs',
+                                'ML Param Est',
+                                'ML SEs')
 View(Parameter_Table)
 
-CV_Matrix_Table = cbind(vech(PsyHat), 
+CV_Matrix_Table = t(cbind(vech(PsyHat), 
                   vech(SIGMAof(rADFcv$pars)), 
                   vech(SIGMAof(rADFcvn$pars)), 
                   vech(SIGMAof(rGLScv$pars)),
-                  vech(SIGMAof(rMLcv$pars)))
+                  vech(SIGMAof(rMLcv$pars))))
+row.names(CV_Matrix_Table) = c(
+                        'Sample CV Matrix', 
+                        'ADF Modeled CV Matrix',
+                        'Normal ADF Modeled CV Matrix',
+                        'GLS Modeled CV Matrix',
+                        'ML Modeled CV Matrix')
 View(CV_Matrix_Table)
