@@ -378,7 +378,7 @@ make_data <- function(model_file_name = 'MOD.dat',
   names(Y) = paste('V',1:ncol(Y),sep='')
   
   if(save_data == TRUE){
-    write.csv(Y, paste('cv_sample_data.csv'))
+    write.table(Y, paste('cv_sample_data.dat'), sep="\t",row.names=FALSE)
   }
   
   #Return Sample Data Matrix

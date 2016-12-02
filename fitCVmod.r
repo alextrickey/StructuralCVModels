@@ -13,8 +13,9 @@
 ##Load Required Packages ##
 ###########################
 
+require('MASS') #Multivariate Normal Distributions
 require('matrixcalc') #Special Matrices
-require('numDeriv') #Needed for SEs
+require('numDeriv') #Needed to estimate SEs
 source('scvm_functions.r') #Custom functions to fit CV models
 
 
@@ -22,11 +23,11 @@ source('scvm_functions.r') #Custom functions to fit CV models
 ## LOAD DATA & MODEL ##
 #######################
 
-#Simulate a dataset
-Y = make_data() ## Read in data here
+#Enter data file name here:
+Y = read.table('cv_sample_data.dat',header = TRUE)
 head(Y)
 
-#MOD file is here: 
+#Specify MOD file here: 
 MOD <- read.delim("MOD.dat") ## Read in model here
 
 
