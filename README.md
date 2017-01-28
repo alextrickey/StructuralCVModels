@@ -87,6 +87,9 @@ also provided.
 The reference below contains relevant theoretical background, performance tests 
 and an application of the modeling techniques/algorithm provided here. 
 
+### License
+This repository is licensed under the MIT License. See the LICENSE.txt for details.
+
 ### References
 Trickey, K. A. (2015). Structural Models of Coefficient of Variation Matrices. 
 UCLA: Psychology 0780. Retrieved from: http://escholarship.org/uc/item/0zj3b6qk
