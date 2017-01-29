@@ -90,6 +90,10 @@ and an application of the modeling techniques/algorithm provided here.
 ### License
 This repository is licensed under the MIT License. See the LICENSE.txt for details.
 
+### Acknowledgments
+The work contatained in this project and the reference below would not have been 
+possilbe without the guidance and support of Dr. Peter M. Bentler. 
+
 ### References
 Trickey, K. A. (2015). Structural Models of Coefficient of Variation Matrices. 
 UCLA: Psychology 0780. Retrieved from: http://escholarship.org/uc/item/0zj3b6qk
